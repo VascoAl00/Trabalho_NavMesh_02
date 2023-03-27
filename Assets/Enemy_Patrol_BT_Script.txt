@@ -1,0 +1,40 @@
+tree("Root")
+	fallback
+		sequence
+			fallback
+				SeePlayer
+				AwareOfPlayer
+			tree("chase")
+		tree("patrol")
+
+
+tree("chase")
+	sequence
+		ChasePlayer
+		fallback
+			SeePlayer
+			while
+				not SeePlayer
+				race
+					sequence
+						Wait 10.0
+						ForgetPlayer
+					repeat
+						sequence
+							GetNervous
+							fallback
+								IsMoving
+								Move
+		
+
+
+tree("patrol")
+	sequence
+		GetHappy
+		fallback
+			IsMoving
+			Move
+
+
+	
+
