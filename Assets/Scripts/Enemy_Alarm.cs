@@ -28,10 +28,37 @@ public class Enemy_Alarm : MonoBehaviour
 
     public static event homie goPlayer;
 
+
+
+    public GameObject bulletPrefab;
+    public float bulletSpeed = 10f;
+    public float fireRate = 1f;
+
+    private float lastShotTime;
+
+
+
+    public int maxHP = 1;
+    private int currentHP = 1;
+
+    [SerializeField] GameObject healthBar;
+
+
+    public bool canOpenDoors;
+    public DoorMovement closeDoors;
+
+    public delegate void doorsgoBrrr();
+    public static event doorsgoBrrr doorclose;
+
+    public static event doorsgoBrrr dooropen;
+
+
     private void Start()
     {
         player = GameObject.Find("Player_Bean");
         startingPosition = transform.position;
+
+        canOpenDoors = true;
     }
 
     void Update()
@@ -65,7 +92,6 @@ public class Enemy_Alarm : MonoBehaviour
     public bool SeePlayer()
     {
 
-
         RaycastHit hit;
         if (Physics.Raycast(transform.position, player.transform.position - transform.position, out hit))
         {
@@ -73,6 +99,10 @@ public class Enemy_Alarm : MonoBehaviour
             if (hit.collider.gameObject.CompareTag("Player"))
             {
                 timetoforgetplayer = 0;
+                if (!awareOfPlayer)
+                {
+                   doorclose();
+                }
                 awareOfPlayer = true;
                 playerPos = player.transform.position;
                 goPlayer(playerPos);
@@ -86,6 +116,7 @@ public class Enemy_Alarm : MonoBehaviour
         return false;
 
     }
+
 
     [Task]
     void Move()
@@ -186,6 +217,87 @@ public class Enemy_Alarm : MonoBehaviour
         awareOfPlayer = false;
         agent.SetDestination(startingPosition);
 
+        dooropen();
+
         return true;
+
     }
+
+
+
+    private bool CanShoot()
+    {
+        return (Time.time - lastShotTime) >= fireRate;
+    }
+
+
+    [Task]
+    private void ShootBullet()
+    {
+        if (CanShoot())
+        {
+
+            Vector3 direction = (player.transform.position - transform.position).normalized;
+
+            GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+            Rigidbody bulletRigidbody = bullet.GetComponent<Rigidbody>();
+            bulletRigidbody.velocity = direction * bulletSpeed;
+
+            lastShotTime = Time.time;
+
+        }
+            ThisTask.Succeed();
+
+    }
+
+    private void TakeDamage()
+    {
+
+        currentHP = currentHP - 1;
+        healthBar.transform.GetChild(currentHP).gameObject.SetActive(false);
+
+        if (currentHP <= 0)
+        {
+
+            Dies();
+
+        }
+
+    }
+
+    private void Dies()
+    {
+
+        Destroy(gameObject);
+
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+
+        if (other.CompareTag("Bullet"))
+        {
+
+            TakeDamage();
+
+        }
+
+    }
+
+    public void BlockDoors()
+    {
+
+        canOpenDoors = false;
+        closeDoors.CloseDoor();
+
+    }
+
+    public void UnBlockDoors()
+    {
+
+        canOpenDoors = true;
+
+    }
+
+
 }

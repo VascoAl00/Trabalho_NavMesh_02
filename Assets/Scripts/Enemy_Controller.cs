@@ -16,7 +16,7 @@ public class Enemy_Controller: MonoBehaviour
 
     GameObject player;
 
-    private float timetoforgetplayer = 20f;
+    private float timetoforgetplayer = 15f;
 
     Vector3 newPos;
     Vector3 playerPos;
@@ -24,10 +24,28 @@ public class Enemy_Controller: MonoBehaviour
     private bool awareOfPlayer;
 
 
+
+
+    public GameObject bulletPrefab;
+    public float bulletSpeed = 10f;
+    public float fireRate = 1f;
+
+    private float lastShotTime;
+
+
+
+    public int maxHP = 1;
+    private int currentHP = 1;
+
+    [SerializeField] GameObject healthBar;
+
+
     private void Start()
     {
         player = GameObject.Find("Player_Bean");
         Enemy_Alarm.goPlayer += receberAviso;
+
+        lastShotTime = -fireRate;
     }
     private void receberAviso(Vector3 receberPos)
     {
@@ -182,4 +200,65 @@ public class Enemy_Controller: MonoBehaviour
 
         return true;
     }
+
+    private bool CanShoot()
+    {
+        return (Time.time - lastShotTime) >= fireRate;
+    }
+
+
+    [Task]
+    private void ShootBullet()
+    {
+           if (CanShoot())
+        {
+
+            Vector3 direction = (player.transform.position - transform.position).normalized;
+
+            GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+            Rigidbody bulletRigidbody = bullet.GetComponent<Rigidbody>();
+            bulletRigidbody.velocity = direction * bulletSpeed;
+
+            lastShotTime = Time.time;
+
+        }
+
+        ThisTask.Succeed();
+
+    }
+
+    private void TakeDamage()
+    {
+
+        currentHP = currentHP - 1;
+        healthBar.transform.GetChild(currentHP).gameObject.SetActive(false);
+
+        if (currentHP <= 0)
+        {
+
+            Dies();
+
+        }
+
+    }
+
+    private void Dies()
+    {
+
+        Destroy(gameObject);
+
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+
+        if (other.CompareTag("Bullet"))
+        {
+
+            TakeDamage();
+
+        }
+
+    }
+
 }

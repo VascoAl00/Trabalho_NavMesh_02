@@ -25,6 +25,7 @@ tree("chase")
 							fallback
 								IsMoving
 								Move
+		ShootBullet
 		
 
 
